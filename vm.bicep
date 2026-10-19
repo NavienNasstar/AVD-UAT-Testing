@@ -63,6 +63,23 @@ param enableGuestConfig bool = false
 @description('Install the Microsoft Defender for Endpoint extension (MDE.Windows).')
 param enableDefender bool = false
 
+@description('Windows patching. AutomaticByOS = Windows Update decides (current behaviour). AutomaticByPlatform = Azure Update Manager controls patching (needed for a maintenance configuration schedule to patch the VM).')
+@allowed([
+  'AutomaticByOS'
+  'AutomaticByPlatform'
+])
+param patchMode string = 'AutomaticByOS'
+
+@description('AutomaticByPlatform = Azure Update Manager checks for missing updates every 24 hours. ImageDefault = no automatic check.')
+@allowed([
+  'ImageDefault'
+  'AutomaticByPlatform'
+])
+param assessmentMode string = 'ImageDefault'
+
+@description('Optional. Full resource ID of an Azure Update Manager maintenance configuration. When set, each new VM is assigned to it at deploy time (it can be in another subscription). Leave empty if a dynamic scope or Azure Policy assigns the VMs.')
+param maintenanceConfigurationId string = ''
+
 @description('Resource ID of the data collection rule (can be in another subscription). Used when enableAma is true.')
 param dcrId string = ''
 
@@ -144,6 +161,14 @@ resource vm 'Microsoft.Compute/virtualMachines@2024-07-01' = {
       windowsConfiguration: {
         provisionVMAgent: true
         enableAutomaticUpdates: true
+        patchSettings: {
+          patchMode: patchMode
+          assessmentMode: assessmentMode
+          // Needed so a maintenance configuration (Azure Update Manager schedule) can patch the VM.
+          automaticByPlatformSettings: patchMode == 'AutomaticByPlatform' ? {
+            bypassPlatformSafetyChecksOnUserSchedule: true
+          } : null
+        }
       }
     }
     networkProfile: {
@@ -292,3 +317,12 @@ resource defenderExtension 'Microsoft.Compute/virtualMachines/extensions@2024-07
 }
 
 output vmId string = vm.id
+
+// Assign the VM to the maintenance configuration (patch schedule). Only when an ID is supplied.
+resource maintenanceAssignment 'Microsoft.Maintenance/configurationAssignments@2023-04-01' = if (!empty(maintenanceConfigurationId)) {
+  name: 'avd-patching'
+  scope: vm
+  properties: {
+    maintenanceConfigurationId: maintenanceConfigurationId
+  }
+}
