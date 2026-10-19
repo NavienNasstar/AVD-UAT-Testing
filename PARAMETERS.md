@@ -65,3 +65,12 @@ az deployment sub create --name vms-<build>-prod --location uksouth \
 - `osDiskSizeGB`, `osDiskStorageAccountType`, `avdAgentModulesUrl` are fixed standards, no longer parameters.
 - `zone` (one number) is replaced by `availabilityZones` (a list).
 - The computer name stem (including the UAT `U`) is now worked out inside the Bicep, so the pipeline no longer needs the stem code.
+
+## Azure Update Manager (optional)
+| Parameter | Default | Meaning |
+|---|---|---|
+| patchMode | AutomaticByOS | Set `AutomaticByPlatform` so Azure Update Manager (and your maintenance configuration) patches the VM |
+| assessmentMode | ImageDefault | Set `AutomaticByPlatform` for a daily update assessment |
+| maintenanceConfigurationId | (empty) | Full resource ID of a maintenance configuration. When set, each new VM is assigned to it at deploy time. The pipeline identity needs Microsoft.Maintenance/configurationAssignments/write on the VM and read on the configuration. |
+
+Set both in the customer variable group. The maintenance configuration itself (schedule, and assignment by dynamic scope or policy) is not created by this Bicep.
