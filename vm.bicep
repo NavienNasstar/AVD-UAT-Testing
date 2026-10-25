@@ -309,6 +309,7 @@ output vmId string = vm.id
 resource maintenanceAssignment 'Microsoft.Maintenance/configurationAssignments@2023-04-01' = if (!empty(maintenanceConfigurationId)) {
   name: 'avd-patching'
   scope: vm
+  location: location // required by the Maintenance resource provider
   properties: {
     maintenanceConfigurationId: maintenanceConfigurationId
   }
