@@ -139,20 +139,6 @@ param enableGuestConfig bool = false
 @description('Install the Microsoft Defender for Endpoint extension.')
 param enableDefender bool = false
 
-@description('AutomaticByOS (default, Windows Update) or AutomaticByPlatform (Azure Update Manager controls patching, needed for a maintenance configuration schedule).')
-@allowed([
-  'AutomaticByOS'
-  'AutomaticByPlatform'
-])
-param patchMode string = 'AutomaticByOS'
-
-@description('ImageDefault (default) or AutomaticByPlatform (Azure Update Manager assesses every 24 hours).')
-@allowed([
-  'ImageDefault'
-  'AutomaticByPlatform'
-])
-param assessmentMode string = 'ImageDefault'
-
 @description('Optional. Full resource ID of an Azure Update Manager maintenance configuration to assign every new VM to. Leave empty if a dynamic scope or Azure Policy does it.')
 param maintenanceConfigurationId string = ''
 
@@ -216,8 +202,6 @@ module vm './vm.bicep' = [for i in range(0, hostDeployCount): {
     enableAma: enableAma
     enableGuestConfig: enableGuestConfig
     enableDefender: enableDefender
-    patchMode: patchMode
-    assessmentMode: assessmentMode
     maintenanceConfigurationId: maintenanceConfigurationId
     dcrId: dcrId
     tags: tags
